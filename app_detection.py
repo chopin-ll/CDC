@@ -37,8 +37,12 @@ def load_detection_model(model_path="detection_model/best.pt"):
 
 @st.cache_resource
 def load_classifier_model(model_path="classifier_model/best_resnet18.pth"):
-    st.warning("分类器模型未加载，假阳性过滤功能不可用")
-    return None
+    try:
+        model = load_classifier(model_path, device='cpu')
+        return model
+    except Exception as e:
+        st.warning(f"分类器模型加载失败，将不进行二次过滤: {e}")
+        return None
 
 detection_model = load_detection_model()
 classifier_model = load_classifier_model()
