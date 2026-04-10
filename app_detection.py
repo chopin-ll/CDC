@@ -41,7 +41,7 @@ def load_classifier_model(model_path="classifier_model/best_resnet18.pth"):
         model = load_classifier(model_path, device='cpu')
         return model
     except Exception as e:
-        st.warning(f"此网站暂不展示分类器模型功能")
+        st.warning(f"此网站只展示预测，暂不展示分类器的模型功能")
         return None
 
 detection_model = load_detection_model()
