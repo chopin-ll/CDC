@@ -2,7 +2,7 @@
 多线程 Web 界面，默认不启用分类器过滤（稳定输出检测结果），用户可勾选启用实验性过滤
 """
 
-from classifier_filter import load_classifier, predict_patch
+# from classifier_filter import load_classifier, predict_patch
 import streamlit as st
 from ultralytics import YOLO
 import cv2
@@ -37,12 +37,8 @@ def load_detection_model(model_path="detection_model/best.pt"):
 
 @st.cache_resource
 def load_classifier_model(model_path="classifier_model/best_resnet18.pth"):
-    try:
-        model = load_classifier(model_path, device='cpu')
-        return model
-    except Exception as e:
-        st.warning(f"分类器模型加载失败，将不进行二次过滤: {e}")
-        return None
+    st.warning("分类器模型未加载，假阳性过滤功能不可用")
+    return None
 
 detection_model = load_detection_model()
 classifier_model = load_classifier_model()
