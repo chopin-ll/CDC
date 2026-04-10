@@ -231,17 +231,17 @@ if uploaded_files:
 
     # PDF生成部分
     _pdf_lock = threading.Lock()
-    FONT_PATH = r"C:\Windows\Fonts\simhei.ttf"
+    # FONT_PATH = os.path.join(os.path.dirname(__file__), "fonts", "simhei.ttf")
     def generate_pdf_report(results, spacing, det_conf, final_thresh, enable_filter, is_single=False, single_res=None):
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         width, height = A4
-        from reportlab.pdfbase import pdfmetrics
-        from reportlab.pdfbase.ttfonts import TTFont
-        pdfmetrics.registerFont(TTFont('SimHei', FONT_PATH))
-        c.setFont("SimHei", 16)
+        # from reportlab.pdfbase import pdfmetrics
+        # from reportlab.pdfbase.ttfonts import TTFont
+        # pdfmetrics.registerFont(TTFont('SimHei', FONT_PATH))
+        c.setFont("Helvetica", 16)
         c.drawString(20 * mm, height - 20 * mm, "肺结节检测诊断报告")
-        c.setFont("SimHei", 10)
+        c.setFont("Helvetica", 10)
         c.drawString(20 * mm, height - 25 * mm, f"生成时间: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         c.drawString(20 * mm, height - 30 * mm, f"像素间距: {spacing} mm/pixel")
         c.drawString(20 * mm, height - 35 * mm, f"检测阈值: {det_conf}")
@@ -252,10 +252,10 @@ if uploaded_files:
         y_pos = height - 50 * mm
         data_list = [single_res] if is_single else results
         for res in data_list:
-            c.setFont("SimHei", 12)
+            c.setFont("Helvetica", 12)
             c.drawString(20 * mm, y_pos, f"【{res['name']}】")
             y_pos -= 8 * mm
-            c.setFont("SimHei", 10)
+            c.setFont("Helvetica", 10)
             if res["num"] == 0:
                 c.drawString(20 * mm, y_pos, "未检测到结节")
                 y_pos -= 8 * mm
