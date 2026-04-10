@@ -2,7 +2,6 @@
 定义 SimpleCNN/ResNet18 结构，加载分类器权重，提供 predict_patch 返回结节概率
 """
 
-
 import torch
 import torch.nn as nn
 from torchvision import transforms, models
