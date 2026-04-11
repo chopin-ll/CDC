@@ -236,37 +236,40 @@ if uploaded_files:
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         width, height = A4
-        # from reportlab.pdfbase import pdfmetrics
-        # from reportlab.pdfbase.ttfonts import TTFont
-        # pdfmetrics.registerFont(TTFont('SimHei', FONT_PATH))
+    
+        # 使用 Helvetica 字体（支持英文/数字，无需中文字体）
         c.setFont("Helvetica", 16)
-        c.drawString(20 * mm, height - 20 * mm, "Pulmonary Nodule Detection and Diagnosis Report")
+        c.drawString(20 * mm, height - 20 * mm, "Lung Nodule Detection Report")
         c.setFont("Helvetica", 10)
-        c.drawString(20 * mm, height - 25 * mm, f"Report Generation Time: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        c.drawString(20 * mm, height - 25 * mm, f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         c.drawString(20 * mm, height - 30 * mm, f"Pixel Spacing: {spacing} mm/pixel")
         c.drawString(20 * mm, height - 35 * mm, f"Detection Threshold: {det_conf}")
         if enable_filter:
             c.drawString(20 * mm, height - 40 * mm, f"Final Score Threshold: {final_thresh}")
         else:
-            c.drawString(20 * mm, height - 40 * mm, "False Positive Filtering: Disabled")
-            
+            c.drawString(20 * mm, height - 40 * mm, "False Positive Filter: Disabled")
+    
         y_pos = height - 50 * mm
         data_list = [single_res] if is_single else results
+    
         for res in data_list:
             c.setFont("Helvetica", 12)
             c.drawString(20 * mm, y_pos, f"【{res['name']}】")
             y_pos -= 8 * mm
+    
             c.setFont("Helvetica", 10)
             if res["num"] == 0:
-                c.drawString(20 * mm, y_pos, "未检测到结节")
+                c.drawString(20 * mm, y_pos, "No nodules detected")
                 y_pos -= 8 * mm
             else:
-                c.drawString(20 * mm, y_pos, f"检测到 {res['num']} 个结节:")
+                c.drawString(20 * mm, y_pos, f"Detected {res['num']} nodule(s):")
                 y_pos -= 8 * mm
                 for i, d in enumerate(res["detections"], 1):
-                    cls_info = f" | 分类器概率: {d['cls_conf']:.2%}" if d['cls_conf'] else ""
-                    c.drawString(25 * mm, y_pos, f"结节{i}: 直径 {d['diameter_mm']:.1f}mm | 最终得分 {d['det_conf']:.2%}{cls_info}")
+                    cls_info = f" | Classifier prob: {d['cls_conf']:.2%}" if d['cls_conf'] else ""
+                    c.drawString(25 * mm, y_pos, f"Nodule {i}: Diameter {d['diameter_mm']:.1f}mm | Final Score {d['det_conf']:.2%}{cls_info}")
                     y_pos -= 6 * mm
+    
+            # 嵌入图片
             img = res["annotated_img"]
             img_w, img_h = 170 * mm, 120 * mm
             with _pdf_lock:
@@ -276,9 +279,11 @@ if uploaded_files:
                 c.drawImage(tmp_img_path, 20 * mm, y_pos - img_h, img_w, img_h)
                 os.unlink(tmp_img_path)
             y_pos -= (img_h + 10 * mm)
+    
             if y_pos < 40 * mm:
                 c.showPage()
                 y_pos = height - 20 * mm
+    
         c.save()
         buffer.seek(0)
         return buffer
