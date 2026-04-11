@@ -240,15 +240,16 @@ if uploaded_files:
         # from reportlab.pdfbase.ttfonts import TTFont
         # pdfmetrics.registerFont(TTFont('SimHei', FONT_PATH))
         c.setFont("Helvetica", 16)
-        c.drawString(20 * mm, height - 20 * mm, "肺结节检测诊断报告")
+        c.drawString(20 * mm, height - 20 * mm, "Pulmonary Nodule Detection and Diagnosis Report")
         c.setFont("Helvetica", 10)
-        c.drawString(20 * mm, height - 25 * mm, f"生成时间: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        c.drawString(20 * mm, height - 30 * mm, f"像素间距: {spacing} mm/pixel")
-        c.drawString(20 * mm, height - 35 * mm, f"检测阈值: {det_conf}")
+        c.drawString(20 * mm, height - 25 * mm, f"Report Generation Time: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        c.drawString(20 * mm, height - 30 * mm, f"Pixel Spacing: {spacing} mm/pixel")
+        c.drawString(20 * mm, height - 35 * mm, f"Detection Threshold: {det_conf}")
         if enable_filter:
-            c.drawString(20 * mm, height - 40 * mm, f"最终得分阈值: {final_thresh}")
+            c.drawString(20 * mm, height - 40 * mm, f"Final Score Threshold: {final_thresh}")
         else:
-            c.drawString(20 * mm, height - 40 * mm, "假阳性过滤: 未启用")
+            c.drawString(20 * mm, height - 40 * mm, "False Positive Filtering: Disabled")
+            
         y_pos = height - 50 * mm
         data_list = [single_res] if is_single else results
         for res in data_list:
