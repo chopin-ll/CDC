@@ -6,10 +6,10 @@ import torch
 import torch.nn as nn
 from torchvision import transforms, models
 from PIL import Image
-import cv2
 import numpy as np
 
-# 必须与训练时的模型结构一致（ResNet18 单通道输入）
+# 注意：cv2 在 predict_patch 内部导入，避免模块加载时出错
+
 def load_classifier(model_path="classifier_model/best_resnet18.pth", device='cpu'):
     model = models.resnet18(weights=None)
     model.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
@@ -24,6 +24,8 @@ def predict_patch(patch_img, model, device='cpu'):
     """
     返回结节类别的概率 (0~1)，不做阈值判断
     """
+    import cv2  # 延迟导入，避免部署环境缺少图形库时模块加载失败
+
     # 转为灰度图
     if len(patch_img.shape) == 3 and patch_img.shape[2] == 3:
         patch_img = cv2.cvtColor(patch_img, cv2.COLOR_RGB2GRAY)
