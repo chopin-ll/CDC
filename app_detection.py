@@ -2,7 +2,7 @@
 多线程 Web 界面，默认不启用分类器过滤（稳定输出检测结果），用户可勾选启用实验性过滤
 """
 
-# from classifier_filter import load_classifier, predict_patch
+from classifier_filter import load_classifier, predict_patch
 import streamlit as st
 from ultralytics import YOLO
 import cv2
