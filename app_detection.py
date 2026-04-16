@@ -27,6 +27,19 @@ st.set_page_config(page_title="肺结节检测系统", layout="wide", page_icon=
 st.markdown("""
 <style>
     /* 主标题样式 */
+    /* 全局背景渐变 */
+    .stApp {
+        background: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+    }
+    
+    /* 主内容区白底卡片效果 */
+    .block-container {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 24px;
+        padding: 1.5rem 2rem;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    }
+    
     .main-title {
         font-size: 2.5rem;
         font-weight: 700;
