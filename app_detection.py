@@ -20,12 +20,100 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ctx
 
-# 主页面
-st.set_page_config(page_title="肺结节检测系统", layout="wide")
-st.title("肺结节检测 + 可选假阳性过滤")
-st.markdown("上传肺部 CT 轴向切片（2D），模型将自动检测并框出结节。")
+# ========== 页面配置 ==========
+st.set_page_config(page_title="肺结节检测系统", layout="wide", page_icon="🫁")
 
-# 模型加载
+# ========== 自定义 CSS 美化 ==========
+st.markdown("""
+<style>
+    /* 主标题样式 */
+    .main-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+    .subtitle {
+        font-size: 1.1rem;
+        color: #7f8c8d;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    /* 侧边栏样式 */
+    .css-1d391kg, .css-12oz5g0 {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+    /* 按钮样式 */
+    .stButton > button {
+        background-color: #2c7be5;
+        color: white;
+        border-radius: 8px;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .stButton > button:hover {
+        background-color: #1a68d1;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    /* 成功/信息框样式 */
+    .stAlert {
+        border-radius: 10px;
+        border-left: 5px solid #2c7be5;
+    }
+    /* 图像容器圆角 */
+    .stImage {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    /* 卡片样式 */
+    .detection-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        margin-bottom: 1rem;
+        transition: transform 0.2s;
+    }
+    .detection-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    /* 参数滑块标签 */
+    .stSlider label {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+    /* 页脚 */
+    .footer {
+        text-align: center;
+        margin-top: 3rem;
+        padding-top: 1rem;
+        border-top: 1px solid #eaeaea;
+        color: #95a5a6;
+        font-size: 0.8rem;
+    }
+    /* 指标卡片 */
+    .metric-card {
+        background: #f1f9ff;
+        border-radius: 12px;
+        padding: 0.5rem;
+        text-align: center;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# 主页面标题
+st.markdown('<div class="main-title">肺结节智能检测系统</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">基于YOLOv8的自动化结节检测 | 支持假阳性过滤 | 一键生成诊断报告</div>', unsafe_allow_html=True)
+
+# ========== 模型加载 ==========
 @st.cache_resource
 def load_detection_model(model_path="detection_model/best.pt"):
     try:
@@ -50,21 +138,27 @@ classifier_model = load_classifier_model()
 if detection_model is None:
     st.stop()
 
-# 侧边栏
+# ========== 侧边栏 ==========
 with st.sidebar:
-    st.subheader("参数设置")
-    MAX_WORKERS = st.number_input("线程个数", value=2, step=1, min_value=1, max_value=8, help="线程越多速度越快，建议≤4")
-    det_conf = st.slider("检测置信度阈值", 0.1, 1.0, 0.3, 0.05)
-    # 复选框：默认关闭过滤
-    enable_filter = st.checkbox("启用智能假阳性过滤（实验性）", value=False, help="开启后使用分类器过滤假阳性，可能影响召回率")
+    st.markdown("### ⚙️ 参数设置")
+    st.markdown("---")
+    
+    MAX_WORKERS = st.number_input("🧵 线程个数", value=2, step=1, min_value=1, max_value=8, help="线程越多速度越快，建议≤4")
+    det_conf = st.slider("🎯 检测置信度阈值", 0.1, 1.0, 0.3, 0.05, help="越高漏检越少，但可能增加假阳性")
+    
+    enable_filter = st.checkbox("🔬 启用智能假阳性过滤（实验性）", value=False, help="开启后使用分类器过滤假阳性，可能影响召回率")
     if enable_filter:
-        final_threshold = st.slider("最终得分阈值 (检测置信度 × 分类器概率)", 0.0, 1.0, 0.2, 0.05, help="推荐0.2~0.3")
+        final_threshold = st.slider("📊 最终得分阈值 (检测置信度 × 分类器概率)", 0.0, 1.0, 0.2, 0.05, help="推荐0.2~0.3")
     else:
-        final_threshold = 0.0  # 占位
-    spacing = st.number_input("像素间距 (mm/pixel)", value=1.0, step=0.1)
-    uploaded_files = st.file_uploader("选择 CT 图像", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+        final_threshold = 0.0
+    
+    spacing = st.number_input("📏 像素间距 (mm/pixel)", value=1.0, step=0.1, help="CT图像中每个像素对应的实际尺寸")
+    
+    st.markdown("---")
+    uploaded_files = st.file_uploader("📤 选择 CT 图像", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+    st.markdown("<p style='font-size:0.8rem; color:gray;'>支持PNG/JPG格式，可批量上传</p>", unsafe_allow_html=True)
 
-# 单张图像检测+可选过滤
+# ========== 检测与过滤函数 ==========
 def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enable_filter):
     try:
         img_rgb = img_data["rgb"]
@@ -73,22 +167,18 @@ def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enab
         filtered_boxes = []
         if result.boxes is not None and len(result.boxes) > 0:
             for box in result.boxes:
-                # 如果不启用过滤，直接保留所有框
                 if not enable_filter:
                     filtered_boxes.append(box)
                     continue
-                # 启用过滤：使用融合得分
                 x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
                 roi = img_rgb[y1:y2, x1:x2]
                 if roi.size == 0:
                     continue
                 if cls_model is not None:
-                    # predict_patch 返回概率 (0~1)
                     cls_prob = predict_patch(roi, cls_model, device='cpu')
                     final_score = float(box.conf[0]) * cls_prob
                     if final_score < final_thresh:
                         continue
-                    # 存储自定义属性（不修改只读的 box.conf）
                     box.cls_conf = cls_prob
                     box.final_conf = final_score
                 else:
@@ -99,7 +189,6 @@ def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enab
         annotated_img = img_rgb.copy()
         for box in filtered_boxes:
             x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
-            # 使用存储的最终得分
             conf = getattr(box, 'final_conf', float(box.conf[0]))
             label = f"Nodule {conf:.2f}"
             if hasattr(box, 'cls_conf') and box.cls_conf is not None:
@@ -116,7 +205,6 @@ def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enab
             h = y2 - y1
             diameter_mm = ((w + h) / 2) * spacing
             center = ((x1 + x2) / 2, (y1 + y2) / 2)
-
             detections.append({
                 'det_conf': conf,
                 'cls_conf': cls_conf,
@@ -124,7 +212,6 @@ def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enab
                 'center': center,
                 'diameter_mm': diameter_mm
             })
-
         return {
             "name": img_data["name"],
             "annotated_img": annotated_img,
@@ -134,7 +221,7 @@ def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enab
     except Exception as e:
         return {"name": img_data["name"], "error": str(e)}
 
-# 多线程处理
+# ========== 多线程处理 ==========
 if uploaded_files:
     st.success(f"✅ 已上传 {len(uploaded_files)} 张图像")
     st.divider()
@@ -176,35 +263,41 @@ if uploaded_files:
                 results.append(res)
 
     # 展示结果
-    filter_status = "已启用" if enable_filter else "未启用"
-    st.subheader(f"检测结果（假阳性过滤{filter_status}）")
+    filter_status = "✅ 已启用" if enable_filter else "⚪ 未启用"
+    st.markdown(f"### 🩺 检测结果（假阳性过滤{filter_status}）")
     total = sum(r["num"] for r in results)
-    st.success(f"共检测到 {total} 个结节")
-    st.divider()
+    st.markdown(f"<div style='background:#e8f4f8; padding:0.8rem; border-radius:12px; margin-bottom:1rem;'>📊 共检测到 <strong>{total}</strong> 个结节</div>", unsafe_allow_html=True)
 
     cols = st.columns(2)
     for idx, res in enumerate(results):
         with cols[idx % 2]:
-            c1, c2 = st.columns(2)
-            with c1:
-                st.image(image_list[idx]["rgb"], "原始图像")
-            with c2:
-                st.image(res["annotated_img"], "检测结果")
+            with st.container():
+                st.markdown(f"<div class='detection-card'>", unsafe_allow_html=True)
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.image(image_list[idx]["rgb"], caption="原始图像", use_container_width=True)
+                with c2:
+                    st.image(res["annotated_img"], caption="检测结果", use_container_width=True)
+                
+                if res["num"] > 0:
+                    st.success(f"🎉 发现 {res['num']} 个结节")
+                    for i, d in enumerate(res["detections"], 1):
+                        with st.expander(f"🔍 结节 {i} 详细信息"):
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.metric("最终得分", f"{d['det_conf']:.2%}")
+                                if d['cls_conf'] is not None:
+                                    st.metric("分类器概率", f"{d['cls_conf']:.2%}")
+                            with col2:
+                                st.metric("直径 (mm)", f"{d['diameter_mm']:.1f}")
+                                st.metric("中心坐标", f"({d['center'][0]:.0f}, {d['center'][1]:.0f})")
+                else:
+                    st.info("😌 未检测到结节")
+                st.markdown(f"</div>", unsafe_allow_html=True)
+                st.markdown("---")
 
-            if res["num"] > 0:
-                st.success(f"✅ {res['num']} 个结节")
-                for i, d in enumerate(res["detections"], 1):
-                    with st.expander(f"结节 {i}"):
-                        st.write(f"最终得分：{d['det_conf']:.2%}")
-                        if d['cls_conf'] is not None:
-                            st.write(f"分类器概率：{d['cls_conf']:.2%}")
-                        st.write(f"直径：{d['diameter_mm']:.1f} mm")
-                        st.write(f"中心：({d['center'][0]:.0f}, {d['center'][1]:.0f})")
-            else:
-                st.info("未检测到结节")
-            st.divider()
-
-    st.subheader("批量诊断报告")
+    st.subheader("📄 批量诊断报告")
+    
     def gen_report(results, spacing, det_conf, final_thresh, enable_filter):
         lines = ["="*50, "肺结节检测报告", "="*50]
         lines.append(f"时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -231,13 +324,10 @@ if uploaded_files:
 
     # PDF生成部分
     _pdf_lock = threading.Lock()
-    # FONT_PATH = os.path.join(os.path.dirname(__file__), "fonts", "simhei.ttf")
     def generate_pdf_report(results, spacing, det_conf, final_thresh, enable_filter, is_single=False, single_res=None):
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
         width, height = A4
-    
-        # 使用 Helvetica 字体（支持英文/数字，无需中文字体）
         c.setFont("Helvetica", 16)
         c.drawString(20 * mm, height - 20 * mm, "Lung Nodule Detection Report")
         c.setFont("Helvetica", 10)
@@ -248,15 +338,12 @@ if uploaded_files:
             c.drawString(20 * mm, height - 40 * mm, f"Final Score Threshold: {final_thresh}")
         else:
             c.drawString(20 * mm, height - 40 * mm, "False Positive Filter: Disabled")
-    
         y_pos = height - 50 * mm
         data_list = [single_res] if is_single else results
-    
         for res in data_list:
             c.setFont("Helvetica", 12)
             c.drawString(20 * mm, y_pos, f"【{res['name']}】")
             y_pos -= 8 * mm
-    
             c.setFont("Helvetica", 10)
             if res["num"] == 0:
                 c.drawString(20 * mm, y_pos, "No nodules detected")
@@ -268,8 +355,6 @@ if uploaded_files:
                     cls_info = f" | Classifier prob: {d['cls_conf']:.2%}" if d['cls_conf'] else ""
                     c.drawString(25 * mm, y_pos, f"Nodule {i}: Diameter {d['diameter_mm']:.1f}mm | Final Score {d['det_conf']:.2%}{cls_info}")
                     y_pos -= 6 * mm
-    
-            # 嵌入图片
             img = res["annotated_img"]
             img_w, img_h = 170 * mm, 120 * mm
             with _pdf_lock:
@@ -279,19 +364,18 @@ if uploaded_files:
                 c.drawImage(tmp_img_path, 20 * mm, y_pos - img_h, img_w, img_h)
                 os.unlink(tmp_img_path)
             y_pos -= (img_h + 10 * mm)
-    
             if y_pos < 40 * mm:
                 c.showPage()
                 y_pos = height - 20 * mm
-    
         c.save()
         buffer.seek(0)
         return buffer
 
     if len(uploaded_files) == 1:
-        pdf_buffer = generate_pdf_report(results, spacing, det_conf, final_threshold, enable_filter)
-        filename = f"肺结节报告_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        st.download_button("📥 下载带图PDF报告", pdf_buffer, file_name=filename, mime="application/pdf")
+        if st.button("📄 生成并下载 PDF 诊断报告", use_container_width=True):
+            pdf_buffer = generate_pdf_report(results, spacing, det_conf, final_threshold, enable_filter)
+            filename = f"LungNodule_Report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            st.download_button("💾 点击下载报告", pdf_buffer, file_name=filename, mime="application/pdf", use_container_width=True)
     else:
         st.info(f"🚀 正在用 {MAX_WORKERS} 线程并发生成PDF报告...")
         ctx = get_script_run_ctx()
@@ -319,10 +403,15 @@ if uploaded_files:
                     st.error(f"❌ {res['name']} PDF生成失败：{res['error']}")
         st.success("✅ 所有PDF生成完成")
         for res in pdf_results:
-            filename = f"报告_{res['name']}.pdf"
+            filename = f"Report_{res['name']}.pdf"
             st.download_button(label=f"📄 下载 {res['name']} 的带图报告", data=res["buffer"], file_name=filename, mime="application/pdf")
 else:
-    st.info("请在左侧上传图片")
+    st.info("📌 请在左侧上传图片开始检测")
 
-st.markdown("---")
-st.caption("模型基于 LUNA16 数据集训练，YOLOv8 检测。可选假阳性过滤为实验功能。仅用于辅助参考。")
+# ========== 页脚 ==========
+st.markdown("""
+<div class="footer">
+    🫁 模型基于 LUNA16 数据集训练 · YOLOv8 检测引擎 · 可选假阳性过滤为实验功能<br>
+    📢 本系统仅供辅助参考，不构成医疗诊断
+</div>
+""", unsafe_allow_html=True)
