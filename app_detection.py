@@ -1,6 +1,5 @@
 """
 多线程 Web 界面，默认不启用分类器过滤（稳定输出检测结果），用户可勾选启用实验性过滤
-美化版：增加 CSS 样式、卡片布局、图标、指标显示等
 """
 
 from classifier_filter import load_classifier, predict_patch
@@ -24,34 +23,47 @@ from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ct
 # ========== 页面配置 ==========
 st.set_page_config(page_title="肺结节检测系统", layout="wide", page_icon="🫁")
 
-# ========== 自定义 CSS 美化 ==========
+# ========== 自定义 CSS 美化（统一背景，清晰文字） ==========
 st.markdown("""
 <style>
+    /* 全局背景与字体 */
+    .stApp {
+        background-color: #f0f2f6;
+    }
+    /* 主容器背景（可选） */
+    .main .block-container {
+        background-color: #ffffff;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-top: 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    /* 侧边栏背景 */
+    .css-1d391kg, .css-12oz5g0 {
+        background-color: #ffffff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
     /* 主标题样式 */
     .main-title {
         font-size: 2.5rem;
         font-weight: 700;
-        color: #2c3e50;
+        color: #1e466e;
         text-align: center;
         margin-bottom: 0.5rem;
     }
     .subtitle {
         font-size: 1.1rem;
-        color: #7f8c8d;
+        color: #5a6e85;
         text-align: center;
         margin-bottom: 2rem;
-    }
-    /* 侧边栏样式 */
-    .css-1d391kg, .css-12oz5g0 {
-        background-color: #f8f9fa;
-        border-radius: 10px;
-        padding: 1rem;
     }
     /* 按钮样式 */
     .stButton > button {
         background-color: #2c7be5;
         color: white;
-        border-radius: 8px;
+        border-radius: 10px;
         border: none;
         padding: 0.5rem 1.5rem;
         font-weight: 600;
@@ -60,52 +72,82 @@ st.markdown("""
     .stButton > button:hover {
         background-color: #1a68d1;
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
     }
-    /* 成功/信息框样式 */
+    /* 成功/信息/警告框 */
     .stAlert {
-        border-radius: 10px;
-        border-left: 5px solid #2c7be5;
-    }
-    /* 图像容器圆角 */
-    .stImage {
         border-radius: 12px;
+        border-left: 5px solid #2c7be5;
+        background-color: #f8fafc;
+    }
+    /* 图像圆角 */
+    .stImage {
+        border-radius: 16px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-    /* 卡片样式 */
+    /* 检测卡片 */
     .detection-card {
-        background: white;
-        border-radius: 16px;
-        padding: 1rem;
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 1.2rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        margin-bottom: 1rem;
-        transition: transform 0.2s;
+        margin-bottom: 1.5rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #e9ecef;
     }
     .detection-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1);
     }
-    /* 参数滑块标签 */
+    /* 指标卡片 */
+    .metric-card {
+        background: #f1f9ff;
+        border-radius: 16px;
+        padding: 0.8rem;
+        text-align: center;
+        border: 1px solid #d9e8f5;
+    }
+    /* 滑块标签 */
     .stSlider label {
         font-weight: 500;
         color: #2c3e50;
+    }
+    /* 数字输入框 */
+    .stNumberInput label {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+    /* 复选框标签 */
+    .stCheckbox label {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+    /* 分割线 */
+    hr {
+        margin: 2rem 0;
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #ccd7e6, transparent);
     }
     /* 页脚 */
     .footer {
         text-align: center;
         margin-top: 3rem;
         padding-top: 1rem;
-        border-top: 1px solid #eaeaea;
-        color: #95a5a6;
+        border-top: 1px solid #e2e8f0;
+        color: #7f8c8d;
         font-size: 0.8rem;
     }
-    /* 指标卡片 */
-    .metric-card {
-        background: #f1f9ff;
+    /* 扩展器样式 */
+    .streamlit-expanderHeader {
+        font-weight: 600;
+        background-color: #f8fafc;
         border-radius: 12px;
-        padding: 0.5rem;
-        text-align: center;
+    }
+    /* 代码/文本区域（如果有） */
+    .stTextArea textarea, .stTextInput input {
+        border-radius: 12px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -157,7 +199,7 @@ with st.sidebar:
     
     st.markdown("---")
     uploaded_files = st.file_uploader("📤 选择 CT 图像", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
-    st.markdown("<p style='font-size:0.8rem; color:gray;'>支持PNG/JPG格式，可批量上传</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.8rem; color:#5a6e85;'>支持PNG/JPG格式，可批量上传</p>", unsafe_allow_html=True)
 
 # ========== 检测与过滤函数 ==========
 def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enable_filter):
@@ -267,7 +309,7 @@ if uploaded_files:
     filter_status = "✅ 已启用" if enable_filter else "⚪ 未启用"
     st.markdown(f"### 🩺 检测结果（假阳性过滤{filter_status}）")
     total = sum(r["num"] for r in results)
-    st.markdown(f"<div style='background:#e8f4f8; padding:0.8rem; border-radius:12px; margin-bottom:1rem;'>📊 共检测到 <strong>{total}</strong> 个结节</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='background:#eef2f7; padding:0.8rem; border-radius:16px; margin-bottom:1rem; border-left:4px solid #2c7be5;'>📊 共检测到 <strong>{total}</strong> 个结节</div>", unsafe_allow_html=True)
 
     cols = st.columns(2)
     for idx, res in enumerate(results):
@@ -286,7 +328,7 @@ if uploaded_files:
                         with st.expander(f"🔍 结节 {i} 详细信息"):
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.metric("最终预测", f"{d['det_conf']:.2%}")
+                                st.metric("最终得分", f"{d['det_conf']:.2%}")
                                 if d['cls_conf'] is not None:
                                     st.metric("分类器概率", f"{d['cls_conf']:.2%}")
                             with col2:
