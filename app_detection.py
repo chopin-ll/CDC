@@ -323,7 +323,7 @@ if uploaded_files:
                     st.image(res["annotated_img"], caption="检测结果", use_container_width=True)
                 
                 if res["num"] > 0:
-                    st.success(f"🎉 发现 {res['num']} 个结节")
+                    st.success(f"📋 检测到 {res['num']} 个结节")
                     for i, d in enumerate(res["detections"], 1):
                         with st.expander(f"🔍 结节 {i} 详细信息"):
                             col1, col2 = st.columns(2)
@@ -335,7 +335,7 @@ if uploaded_files:
                                 st.metric("直径 (mm)", f"{d['diameter_mm']:.1f}")
                                 st.metric("中心坐标", f"({d['center'][0]:.0f}, {d['center'][1]:.0f})")
                 else:
-                    st.info("😌 未检测到结节")
+                    st.info("🎉 未检测到结节")
                 st.markdown(f"</div>", unsafe_allow_html=True)
                 st.markdown("---")
 
