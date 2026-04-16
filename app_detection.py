@@ -1,5 +1,6 @@
 """
 多线程 Web 界面，默认不启用分类器过滤（稳定输出检测结果），用户可勾选启用实验性过滤
+美化版：增加 CSS 样式、卡片布局、图标、指标显示等
 """
 
 from classifier_filter import load_classifier, predict_patch
@@ -20,63 +21,91 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ctx
 
-# 自定义 CSS 美化（安全版）
+# ========== 页面配置 ==========
+st.set_page_config(page_title="肺结节检测系统", layout="wide", page_icon="🫁")
+
+# ========== 自定义 CSS 美化 ==========
 st.markdown("""
 <style>
-    .stApp {
-        background: #f4f7fc;
-    }
-    .block-container {
-        background-color: #ffffff;
-        border-radius: 24px;
-        padding: 2rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
+    /* 主标题样式 */
     .main-title {
-        font-size: 2rem;
-        font-weight: 600;
-        color: #1e466e;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
         text-align: center;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.5rem;
     }
     .subtitle {
-        font-size: 1rem;
-        color: #5c7c9e;
+        font-size: 1.1rem;
+        color: #7f8c8d;
         text-align: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
     }
+    /* 侧边栏样式 */
+    .css-1d391kg, .css-12oz5g0 {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+    /* 按钮样式 */
     .stButton > button {
         background-color: #2c7be5;
         color: white;
-        border-radius: 40px;
+        border-radius: 8px;
         border: none;
         padding: 0.5rem 1.5rem;
-        font-weight: 500;
+        font-weight: 600;
+        transition: all 0.2s;
     }
     .stButton > button:hover {
         background-color: #1a68d1;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .detection-card {
-        background: #ffffff;
-        border-radius: 20px;
-        padding: 1rem;
+    /* 成功/信息框样式 */
+    .stAlert {
+        border-radius: 10px;
+        border-left: 5px solid #2c7be5;
+    }
+    /* 图像容器圆角 */
+    .stImage {
+        border-radius: 12px;
+        overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        border: 1px solid #eef2f6;
     }
-    .summary-box {
-        background: #eef5fa;
+    /* 卡片样式 */
+    .detection-card {
+        background: white;
         border-radius: 16px;
-        padding: 0.8rem;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         margin-bottom: 1rem;
-        border-left: 4px solid #2c7be5;
+        transition: transform 0.2s;
     }
+    .detection-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    /* 参数滑块标签 */
+    .stSlider label {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+    /* 页脚 */
     .footer {
         text-align: center;
-        margin-top: 2rem;
+        margin-top: 3rem;
         padding-top: 1rem;
-        border-top: 1px solid #e2e8f0;
-        color: #8ba3c0;
-        font-size: 0.75rem;
+        border-top: 1px solid #eaeaea;
+        color: #95a5a6;
+        font-size: 0.8rem;
+    }
+    /* 指标卡片 */
+    .metric-card {
+        background: #f1f9ff;
+        border-radius: 12px;
+        padding: 0.5rem;
+        text-align: center;
     }
 </style>
 """, unsafe_allow_html=True)
