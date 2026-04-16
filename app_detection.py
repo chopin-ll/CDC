@@ -26,6 +26,129 @@ st.set_page_config(page_title="肺结节检测系统", layout="wide", page_icon=
 
 st.markdown("""
 <style>
+    /* ========== 侧边栏参数控件统一精美样式 ========== */
+    /* 侧边栏整体内边距与背景（已在前面定义，此处微调） */
+    .css-1d391kg, .css-12oz5g0 {
+        padding: 1.8rem 1.5rem;
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(16px);
+        border-radius: 32px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        border: 1px solid rgba(255,255,255,0.9);
+    }
+    
+    /* 侧边栏分组标题 */
+    .sidebar-section-header {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1e466e;
+        margin: 1rem 0 0.5rem 0;
+        letter-spacing: -0.2px;
+        border-left: 3px solid #2c7be5;
+        padding-left: 0.75rem;
+    }
+    
+    /* 滑块容器 */
+    .stSlider {
+        margin-bottom: 1.2rem;
+    }
+    .stSlider > label {
+        font-weight: 500;
+        color: #2c3e50;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+        display: inline-block;
+    }
+    /* 滑块轨道 */
+    .stSlider > div > div > div {
+        background: #e2e8f0;
+        border-radius: 20px;
+        height: 6px;
+    }
+    /* 滑块圆点 */
+    .stSlider > div > div > div > div {
+        background-color: #2c7be5;
+        box-shadow: 0 2px 6px rgba(44,123,229,0.3);
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        transition: transform 0.1s;
+    }
+    .stSlider > div > div > div > div:hover {
+        transform: scale(1.2);
+    }
+    
+    /* 数字输入框 */
+    .stNumberInput input {
+        border-radius: 40px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .stNumberInput input:focus {
+        border-color: #2c7be5;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(44,123,229,0.2);
+    }
+    
+    /* 复选框容器 */
+    .stCheckbox {
+        margin: 0.8rem 0;
+    }
+    .stCheckbox label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        color: #2c3e50;
+    }
+    /* 自定义复选框样式（Streamlit 原生复选框难以直接改，但可增强视觉） */
+    .stCheckbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        border-radius: 6px;
+        border: 2px solid #cbd5e1;
+        transition: all 0.2s;
+    }
+    .stCheckbox input[type="checkbox"]:checked {
+        background-color: #2c7be5;
+        border-color: #2c7be5;
+    }
+    
+    /* 文件上传器区域 */
+    .stFileUploader {
+        margin-top: 0.5rem;
+    }
+    .stFileUploader > div:first-child {
+        background: rgba(248,250,252,0.8);
+        border-radius: 28px;
+        border: 1px dashed #cbd5e1;
+        padding: 1rem;
+        transition: all 0.2s;
+    }
+    .stFileUploader > div:first-child:hover {
+        border-color: #2c7be5;
+        background: rgba(44,123,229,0.05);
+    }
+    
+    /* 分割线精致化 */
+    .sidebar-divider {
+        margin: 1.2rem 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+    }
+    
+    /* 提示文本 */
+    .help-text {
+        font-size: 0.75rem;
+        color: #7f8c8d;
+        margin-top: -0.5rem;
+        margin-bottom: 0.8rem;
+    }
+
     /* 全局背景渐变 */
     .stApp {
         background: linear-gradient(135deg, #f5f7fc 0%, #eef2f9 100%);
