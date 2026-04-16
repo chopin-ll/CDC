@@ -1,6 +1,5 @@
 """
 多线程 Web 界面，默认不启用分类器过滤（稳定输出检测结果），用户可勾选启用实验性过滤
-美化版 + 明确显示融合得分（当启用过滤时）
 """
 
 from classifier_filter import load_classifier, predict_patch
@@ -24,131 +23,9 @@ from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ct
 # ========== 页面配置 ==========
 st.set_page_config(page_title="肺结节检测系统", layout="wide", page_icon="🫁")
 
+# ========== 自定义 CSS 美化（全局 + 侧边栏细节） ==========
 st.markdown("""
 <style>
-    /* ========== 侧边栏参数控件统一精美样式 ========== */
-    /* 侧边栏整体内边距与背景（已在前面定义，此处微调） */
-    .css-1d391kg, .css-12oz5g0 {
-        padding: 1.8rem 1.5rem;
-        background: rgba(255,255,255,0.92);
-        backdrop-filter: blur(16px);
-        border-radius: 32px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        border: 1px solid rgba(255,255,255,0.9);
-    }
-    
-    /* 侧边栏分组标题 */
-    .sidebar-section-header {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #1e466e;
-        margin: 1rem 0 0.5rem 0;
-        letter-spacing: -0.2px;
-        border-left: 3px solid #2c7be5;
-        padding-left: 0.75rem;
-    }
-    
-    /* 滑块容器 */
-    .stSlider {
-        margin-bottom: 1.2rem;
-    }
-    .stSlider > label {
-        font-weight: 500;
-        color: #2c3e50;
-        font-size: 0.9rem;
-        margin-bottom: 0.25rem;
-        display: inline-block;
-    }
-    /* 滑块轨道 */
-    .stSlider > div > div > div {
-        background: #e2e8f0;
-        border-radius: 20px;
-        height: 6px;
-    }
-    /* 滑块圆点 */
-    .stSlider > div > div > div > div {
-        background-color: #2c7be5;
-        box-shadow: 0 2px 6px rgba(44,123,229,0.3);
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        transition: transform 0.1s;
-    }
-    .stSlider > div > div > div > div:hover {
-        transform: scale(1.2);
-    }
-    
-    /* 数字输入框 */
-    .stNumberInput input {
-        border-radius: 40px;
-        border: 1px solid #e2e8f0;
-        background: white;
-        padding: 0.6rem 1rem;
-        font-size: 0.9rem;
-        transition: all 0.2s;
-        box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
-    }
-    .stNumberInput input:focus {
-        border-color: #2c7be5;
-        outline: none;
-        box-shadow: 0 0 0 2px rgba(44,123,229,0.2);
-    }
-    
-    /* 复选框容器 */
-    .stCheckbox {
-        margin: 0.8rem 0;
-    }
-    .stCheckbox label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 500;
-        color: #2c3e50;
-    }
-    /* 自定义复选框样式（Streamlit 原生复选框难以直接改，但可增强视觉） */
-    .stCheckbox input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        border-radius: 6px;
-        border: 2px solid #cbd5e1;
-        transition: all 0.2s;
-    }
-    .stCheckbox input[type="checkbox"]:checked {
-        background-color: #2c7be5;
-        border-color: #2c7be5;
-    }
-    
-    /* 文件上传器区域 */
-    .stFileUploader {
-        margin-top: 0.5rem;
-    }
-    .stFileUploader > div:first-child {
-        background: rgba(248,250,252,0.8);
-        border-radius: 28px;
-        border: 1px dashed #cbd5e1;
-        padding: 1rem;
-        transition: all 0.2s;
-    }
-    .stFileUploader > div:first-child:hover {
-        border-color: #2c7be5;
-        background: rgba(44,123,229,0.05);
-    }
-    
-    /* 分割线精致化 */
-    .sidebar-divider {
-        margin: 1.2rem 0;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
-    }
-    
-    /* 提示文本 */
-    .help-text {
-        font-size: 0.75rem;
-        color: #7f8c8d;
-        margin-top: -0.5rem;
-        margin-bottom: 0.8rem;
-    }
-
     /* 全局背景渐变 */
     .stApp {
         background: linear-gradient(135deg, #f5f7fc 0%, #eef2f9 100%);
@@ -163,14 +40,31 @@ st.markdown("""
         box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.02);
         border: 1px solid rgba(255,255,255,0.6);
     }
-    /* 侧边栏磨砂玻璃效果 */
+    /* 侧边栏磨砂玻璃效果 + 圆润内边距 */
     .css-1d391kg, .css-12oz5g0 {
         background: rgba(255,255,255,0.85);
         backdrop-filter: blur(12px);
         border-radius: 28px;
         padding: 1.5rem;
+        margin: 1rem 0.5rem;
         box-shadow: 0 8px 20px rgba(0,0,0,0.05);
         border: 1px solid rgba(255,255,255,0.8);
+    }
+    /* 侧边栏内部元素间距优化 */
+    .sidebar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    /* 参数分组标题 */
+    .param-group {
+        font-weight: 600;
+        color: #1e466e;
+        margin-top: 0.5rem;
+        margin-bottom: 0.2rem;
+        font-size: 1rem;
+        border-left: 3px solid #2c7be5;
+        padding-left: 0.8rem;
     }
     /* 主标题渐变色 */
     .main-title {
@@ -303,7 +197,7 @@ st.markdown("""
     ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
     }
-    /* 加载动画（spinner）轻量优化 */
+    /* 加载动画轻量优化 */
     .stSpinner > div {
         border-color: #2c7be5 transparent transparent transparent;
     }
@@ -339,25 +233,38 @@ classifier_model = load_classifier_model()
 if detection_model is None:
     st.stop()
 
-# ========== 侧边栏 ==========
+# ========== 侧边栏（参数栏）优化布局 ==========
 with st.sidebar:
-    st.markdown("### ⚙️ 参数设置")
+    # 顶部图标和欢迎语
+    st.markdown("### 🫁 检测参数配置")
     st.markdown("---")
     
-    MAX_WORKERS = st.number_input("🧵 线程个数", value=2, step=1, min_value=1, max_value=8, help="线程越多速度越快，建议≤4")
-    det_conf = st.slider("🎯 检测置信度阈值", 0.1, 1.0, 0.3, 0.05, help="越高漏检越少，但可能增加假阳性")
+    # 线程数
+    st.markdown('<div class="param-group">⚙️ 性能</div>', unsafe_allow_html=True)
+    MAX_WORKERS = st.number_input("🧵 线程个数", value=2, step=1, min_value=1, max_value=8, 
+                                   help="线程越多速度越快，建议≤4", key="max_workers")
     
-    enable_filter = st.checkbox("🔬 启用智能假阳性过滤（实验性）", value=False, help="开启后使用分类器过滤假阳性，可能影响召回率")
+    st.markdown('<div class="param-group">🎯 检测阈值</div>', unsafe_allow_html=True)
+    det_conf = st.slider("检测置信度阈值", 0.1, 1.0, 0.3, 0.05, 
+                         help="越高漏检越少，但可能增加假阳性", key="det_conf")
+    
+    st.markdown('<div class="param-group">🔬 实验性过滤</div>', unsafe_allow_html=True)
+    enable_filter = st.checkbox("启用智能假阳性过滤（实验性）", value=False, 
+                                help="开启后使用分类器过滤假阳性，可能影响召回率", key="enable_filter")
     if enable_filter:
-        final_threshold = st.slider("📊 最终得分阈值 (检测置信度 × 分类器概率)", 0.0, 1.0, 0.2, 0.05, help="推荐0.2~0.3")
+        final_threshold = st.slider("📊 最终得分阈值 (检测置信度 × 分类器概率)", 0.0, 1.0, 0.2, 0.05, 
+                                    help="推荐0.2~0.3", key="final_threshold")
     else:
         final_threshold = 0.0
     
-    spacing = st.number_input("📏 像素间距 (mm/pixel)", value=1.0, step=0.1, help="CT图像中每个像素对应的实际尺寸")
+    st.markdown('<div class="param-group">📐 图像参数</div>', unsafe_allow_html=True)
+    spacing = st.number_input("📏 像素间距 (mm/pixel)", value=1.0, step=0.1, 
+                              help="CT图像中每个像素对应的实际尺寸", key="spacing")
     
     st.markdown("---")
-    uploaded_files = st.file_uploader("📤 选择 CT 图像", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
-    st.markdown("<p style='font-size:0.8rem; color:#5a6e85;'>支持PNG/JPG格式，可批量上传</p>", unsafe_allow_html=True)
+    uploaded_files = st.file_uploader("📤 选择 CT 图像", type=["png", "jpg", "jpeg"], 
+                                      accept_multiple_files=True, key="uploader")
+    st.markdown("<p style='font-size:0.8rem; color:#5a6e85; margin-top:-0.5rem;'>支持PNG/JPG格式，可批量上传</p>", unsafe_allow_html=True)
 
 # ========== 检测与过滤函数 ==========
 def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enable_filter):
@@ -391,7 +298,6 @@ def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enab
         for box in filtered_boxes:
             x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
             conf = getattr(box, 'final_conf', float(box.conf[0]))
-            # 根据是否启用过滤，显示不同的标签文字
             if enable_filter:
                 label = f"Fused Score: {conf:.2f}"
                 if hasattr(box, 'cls_conf') and box.cls_conf is not None:
