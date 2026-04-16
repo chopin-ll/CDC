@@ -1,5 +1,6 @@
 """
 多线程 Web 界面，默认不启用分类器过滤（稳定输出检测结果），用户可勾选启用实验性过滤
+美化版 + 明确显示融合得分（当启用过滤时）
 """
 
 from classifier_filter import load_classifier, predict_patch
@@ -233,9 +234,15 @@ def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enab
         for box in filtered_boxes:
             x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
             conf = getattr(box, 'final_conf', float(box.conf[0]))
-            label = f"Nodule {conf:.2f}"
-            if hasattr(box, 'cls_conf') and box.cls_conf is not None:
-                label += f" | cls:{box.cls_conf:.2f}"
+            # 根据是否启用过滤，显示不同的标签文字
+            if enable_filter:
+                label = f"Fused Score: {conf:.2f}"
+                if hasattr(box, 'cls_conf') and box.cls_conf is not None:
+                    label += f" | cls:{box.cls_conf:.2f}"
+            else:
+                label = f"Nodule {conf:.2f}"
+                if hasattr(box, 'cls_conf') and box.cls_conf is not None:
+                    label += f" | cls:{box.cls_conf:.2f}"
             cv2.rectangle(annotated_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(annotated_img, label, (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
@@ -328,7 +335,10 @@ if uploaded_files:
                         with st.expander(f"🔍 结节 {i} 详细信息"):
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.metric("置信度", f"{d['det_conf']:.2%}")
+                                if enable_filter:
+                                    st.metric("融合得分", f"{d['det_conf']:.2%}")
+                                else:
+                                    st.metric("检测置信度", f"{d['det_conf']:.2%}")
                                 if d['cls_conf'] is not None:
                                     st.metric("分类器概率", f"{d['cls_conf']:.2%}")
                             with col2:
