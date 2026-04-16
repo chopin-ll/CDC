@@ -286,7 +286,7 @@ if uploaded_files:
                         with st.expander(f"🔍 结节 {i} 详细信息"):
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.metric("最终得分", f"{d['det_conf']:.2%}")
+                                st.metric("最终预测", f"{d['det_conf']:.2%}")
                                 if d['cls_conf'] is not None:
                                     st.metric("分类器概率", f"{d['cls_conf']:.2%}")
                             with col2:
