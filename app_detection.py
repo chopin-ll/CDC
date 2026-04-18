@@ -488,7 +488,7 @@ if uploaded_files:
         return buffer
 
     if len(uploaded_files) == 1:
-        if st.button("📄 生成并下载 PDF 诊断报告", use_container_width=True):
+        if st.button("📄 生成并 PDF 诊断报告", use_container_width=True):
             pdf_buffer = generate_pdf_report(results, spacing, det_conf, final_threshold, enable_filter)
             filename = f"LungNodule_Report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             st.download_button("💾 点击下载报告", pdf_buffer, file_name=filename, mime="application/pdf", use_container_width=True)
