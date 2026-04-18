@@ -294,6 +294,7 @@ def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enab
                     box.final_conf = float(box.conf[0])
                 filtered_boxes.append(box)
 
+        # 确保 annotated_img 总是有效（即使无检测框也返回原图副本）
         annotated_img = img_rgb.copy()
         for box in filtered_boxes:
             x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
@@ -332,7 +333,14 @@ def detect_and_filter(img_data, det_conf, cls_model, final_thresh, spacing, enab
             "num": len(detections)
         }
     except Exception as e:
-        return {"name": img_data["name"], "error": str(e)}
+        # 发生任何异常，返回原图 + 空检测结果，避免中断
+        return {
+            "name": img_data["name"],
+            "annotated_img": img_data["rgb"].copy(),  # 返回原图
+            "detections": [],
+            "num": 0,
+            "error": str(e)  # 可选，用于调试
+        }
 
 # ========== 多线程处理 ==========
 if uploaded_files:
